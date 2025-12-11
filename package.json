@@ -1,0 +1,21 @@
+{
+    "version": "1.0.0",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "libs/*"
+    ],
+    "scripts": {
+        "dev": "docker-compose up --build",
+        "dev:detached": "docker-compose up -d --build",
+        "down": "docker-compose down",
+        "logs": "docker-compose logs -f",
+        "lint": "eslint .",
+        "format": "prettier --write ."
+    },
+    "devDependencies": {
+        "eslint": "^8.56.0",
+        "prettier": "^3.2.5",
+        "typescript": "^5.3.3"
+    }
+}
