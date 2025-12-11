@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { BullModule } from '@nestjs/bullmq';
 import { APP_PIPE } from '@nestjs/core';
 import { join } from 'path';
 
@@ -11,50 +12,56 @@ import { User } from './entities/user.entity';
 import { Project } from './entities/project.entity';
 import { MockEndpoint } from './entities/mock-endpoint.entity';
 
+// Modules
+import { ScanModule } from './modules/scan/scan.module';
+import { MockModule } from './modules/mock/mock.module';
+
 @Module({
     imports: [
-        // 1. Configuration Module
-        ConfigModule.forRoot({
-            isGlobal: true,
-            envFilePath: '.env',
-        }),
+        ConfigModule.forRoot({ isGlobal: true }),
 
-        // 2. Database Module (MySQL)
+        // Database
         TypeOrmModule.forRootAsync({
             imports: [ConfigModule],
             inject: [ConfigService],
-            useFactory: (configService: ConfigService) => ({
+            useFactory: (config: ConfigService) => ({
                 type: 'mysql',
-                host: configService.get<string>('DB_HOST', 'db'),
-                port: configService.get<number>('DB_PORT', 3306),
-                username: configService.get<string>('DB_USERNAME', 'mockgen_user'),
-                password: configService.get<string>('DB_PASSWORD', 'mockgen_password'),
-                database: configService.get<string>('DB_DATABASE', 'mockgen_db'),
+                host: config.get('DB_HOST', 'db'),
+                port: 3306,
+                username: config.get('DB_USERNAME', 'mockgen_user'),
+                password: config.get('DB_PASSWORD', 'mockgen_password'),
+                database: config.get('DB_DATABASE', 'mockgen_db'),
                 entities: [User, Project, MockEndpoint],
-                synchronize: true, // CAUTION: Only for development
-                logging: true,
+                synchronize: true,
             }),
         }),
 
-        // 3. GraphQL Module
+        // GraphQL
         GraphQLModule.forRoot<ApolloDriverConfig>({
             driver: ApolloDriver,
             autoSchemaFile: join(process.cwd(), 'src/schema.gql'),
             sortSchema: true,
-            playground: true,
-            introspection: true,
         }),
+
+        // Job Queue (BullMQ)
+        BullModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: (config: ConfigService) => ({
+                connection: {
+                    host: config.get('REDIS_HOST', 'redis'),
+                    port: config.get('REDIS_PORT', 6379),
+                },
+            }),
+        }),
+
+        ScanModule,
+        MockModule,
     ],
-    controllers: [],
     providers: [
-        // 4. Global Validation Pipe
         {
             provide: APP_PIPE,
-            useValue: new ValidationPipe({
-                whitelist: true,
-                transform: true,
-                forbidNonWhitelisted: true,
-            }),
+            useValue: new ValidationPipe({ whitelist: true, transform: true }),
         },
     ],
 })
