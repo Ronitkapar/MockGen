@@ -1,0 +1,114 @@
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # Database: MySQL 8.0
+  # ---------------------------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: mockgen_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mockgen_db
+      MYSQL_USER: mockgen_user
+      MYSQL_PASSWORD: mockgen_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - mockgen_net
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost" ]
+      timeout: 20s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # Cache: Redis
+  # ---------------------------------------------------------------------------
+  redis:
+    image: redis:alpine
+    container_name: mockgen_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - mockgen_net
+
+  # ---------------------------------------------------------------------------
+  # Backend: NestJS
+  # ---------------------------------------------------------------------------
+  server:
+    build:
+      context: ./apps/server
+      dockerfile: Dockerfile
+    container_name: mockgen_server
+    restart: on-failure
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      NODE_ENV: development
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USERNAME: mockgen_user
+      DB_PASSWORD: mockgen_password
+      DB_DATABASE: mockgen_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    ports:
+      - "3000:3000"
+    networks:
+      - mockgen_net
+    volumes:
+      - ./apps/server:/usr/src/app
+      - /usr/src/app/node_modules
+
+  # ---------------------------------------------------------------------------
+  # Frontend: React (Vite)
+  # ---------------------------------------------------------------------------
+  client:
+    build:
+      context: ./apps/client
+      dockerfile: Dockerfile
+    container_name: mockgen_client
+    restart: on-failure
+    environment:
+      VITE_API_URL: http://localhost:8080/api
+    ports:
+      - "5173:5173"
+    networks:
+      - mockgen_net
+    volumes:
+      - ./apps/client:/usr/src/app
+      - /usr/src/app/node_modules
+
+  # ---------------------------------------------------------------------------
+  # Gateway: Nginx
+  # ---------------------------------------------------------------------------
+  nginx:
+    image: nginx:alpine
+    container_name: mockgen_gateway
+    restart: always
+    depends_on:
+      - server
+      - client
+    ports:
+      - "8080:80"
+    volumes:
+      - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - mockgen_net
+
+networks:
+  mockgen_net:
+    driver: bridge
+
+volumes:
+  db_data:
+  redis_data:
