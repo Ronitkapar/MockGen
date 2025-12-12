@@ -1,36 +1,115 @@
-# 🎯 Quick Start - MockGen
+# 🚀 MockGen - Quick Start Guide
 
-## ⚡ **Get Started in 2 Steps**
+**Status:** ✅ **READY TO RUN**
 
-### **Step 1: Add Your API Key**
+---
 
-1. Get free API key: https://makersuite.google.com/app/apikey
-2. Open: `apps/server/.env`
-3. Replace `your_gemini_api_key_here` with your key
-
-### **Step 2: Run**
+## 🎯 Quick Start (One Command)
 
 ```bash
-npm run dev
+docker compose up -d --build
 ```
 
-Visit: **http://localhost:8080**
+Then open: **http://localhost:8080**
 
 ---
 
-## 📚 **Full Documentation**
+## 📋 What You Need
 
-- 📖 [**DOCKER_SETUP.md**](./DOCKER_SETUP.md) - Complete Docker guide
-- 🔧 [**SETUP_GUIDE.md**](./SETUP_GUIDE.md) - Configuration details
-- ✅ [**FIXES_SUMMARY.md**](./.agent/FIXES_SUMMARY.md) - What was fixed
+### Required: Google Gemini API Key (for AI features)
+
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Click "Get API Key" → "Create API key"
+3. Add it to `.env` file in project root:
+
+```bash
+GEMINI_API_KEY=your_key_here
+```
+
+**Note:** The app works without the API key, but AI features (mentor chat, code analysis) will be disabled.
 
 ---
 
-## 🚀 **Everything is Ready!**
+## 🌐 Access Points
 
-✅ All dependencies installed  
-✅ Dockerfiles created  
-✅ Environment configured  
-✅ Database & Redis ready  
+| Service | URL | Description |
+|---------|-----|-------------|
+| **Main App** | http://localhost:8080 | Full application with nginx gateway |
+| **Client Direct** | http://localhost:5173 | React frontend only |
+| **API Direct** | http://localhost:3000 | NestJS backend API |
+| **GraphQL** | http://localhost:3000/graphql | GraphQL Playground |
 
-**Just add your API key and run!**
+---
+
+## 📋 Common Commands
+
+```bash
+# Start services (in background)
+docker compose up -d --build
+
+# View all logs
+docker compose logs -f
+
+# View specific service logs
+docker compose logs -f server
+docker compose logs -f client
+
+# Stop all services
+docker compose down
+
+# Restart a service
+docker compose restart server
+
+# Clean rebuild
+docker compose down
+docker compose build --no-cache
+docker compose up -d
+```
+
+---
+
+## 🔧 Troubleshooting
+
+### "Access denied" for Docker
+```bash
+# Check if you're in docker group
+groups
+
+# If not, add yourself and restart
+sudo usermod -aG docker $USER
+newgrp docker
+```
+
+### Port already in use
+Edit `docker-compose.yml` and change the port on the left side:
+```yaml
+ports:
+  - "8081:80"  # Changed 8080 to 8081
+```
+
+### Server not starting
+```bash
+# Check logs
+docker compose logs server
+
+# Rebuild
+docker compose build server --no-cache
+docker compose restart server
+```
+
+---
+
+## ✅ Features Working
+
+- ✅ React frontend with Vite
+- ✅ NestJS backend with GraphQL
+- ✅ MySQL database (auto-configured)
+- ✅ Redis cache
+- ✅ Nginx gateway with CORS
+- ✅ Hot reload for development
+
+## ⚠️ AI Features Need API Key
+
+- AI Mentor chat panel
+- Repository code scanner
+- Error log analysis

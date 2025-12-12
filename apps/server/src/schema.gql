@@ -1,0 +1,71 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type MockEndpoint {
+  chaosConfig: String
+  id: ID!
+  method: String!
+  path: String!
+  project: Project!
+  projectId: String!
+  responseData: String!
+}
+
+type Mutation {
+  """Create a new project"""
+  createProject(name: String!, repoUrl: String): ProjectType!
+}
+
+type Project {
+  createdAt: DateTime!
+  endpoints: [MockEndpoint!]
+  id: ID!
+  name: String!
+  owner: User!
+  ownerId: String!
+}
+
+"""A MockGen project for GraphQL"""
+type ProjectType {
+  createdAt: String!
+  id: ID!
+  name: String!
+  repoUrl: String
+}
+
+type Query {
+  """Get all projects"""
+  allProjects: [ProjectType!]!
+
+  """Get system health status"""
+  health: StatusType!
+
+  """Get project by ID"""
+  project(id: String!): ProjectType
+}
+
+"""System status"""
+type StatusType {
+  message: String!
+  timestamp: String!
+  version: String!
+}
+
+type User {
+  email: String!
+  id: ID!
+  name: String!
+  persona: UserPersona!
+  projects: [Project!]
+}
+
+enum UserPersona {
+  PROFESSIONAL
+  STUDENT
+}

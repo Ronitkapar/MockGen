@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, ChangeEvent } from 'react';
+import { useState, useMemo, useRef, ChangeEvent } from 'react';
 import { gql } from '@apollo/client';
 import { useMutation, useQuery } from '@apollo/client/react';
 import debounce from 'lodash.debounce';
@@ -37,26 +37,28 @@ interface GetChaosConfigResponse {
 }
 
 export default function ChaosControls({ projectId }: ChaosControlsProps) {
-    // Local state for immediate UI responsiveness
-    const [latency, setLatency] = useState(0);
-    const [forceError, setForceError] = useState(false);
-    const [isSaved, setIsSaved] = useState(true);
-
-    // Apollo Hooks
+    // Use query data directly for initial values, with local overrides for UI responsiveness
     const { data: queryData } = useQuery<GetChaosConfigResponse>(GET_CHAOS_CONFIG, {
         variables: { projectId },
     });
 
-    // Sync query data to local state
-    useEffect(() => {
-        if (queryData?.chaosConfig) {
-            setLatency(queryData.chaosConfig.latencyMs);
-            setForceError(queryData.chaosConfig.forceError);
-        }
-    }, [queryData]);
+    // Track if user has modified values locally
+    const hasLocalChanges = useRef(false);
+
+    // Local state for immediate UI responsiveness
+    const [localLatency, setLocalLatency] = useState<number | null>(null);
+    const [localForceError, setLocalForceError] = useState<boolean | null>(null);
+    const [isSaved, setIsSaved] = useState(true);
+
+    // Derive effective values: use local state if user has made changes, otherwise use query data
+    const latency = localLatency ?? queryData?.chaosConfig?.latencyMs ?? 0;
+    const forceError = localForceError ?? queryData?.chaosConfig?.forceError ?? false;
 
     const [updateChaos] = useMutation(UPDATE_CHAOS_CONFIG, {
-        onCompleted: () => setIsSaved(true),
+        onCompleted: () => {
+            setIsSaved(true);
+            hasLocalChanges.current = false;
+        },
     });
 
     // Debounced Save Function
@@ -76,14 +78,16 @@ export default function ChaosControls({ projectId }: ChaosControlsProps) {
     // Handlers
     const handleLatencyChange = (e: ChangeEvent<HTMLInputElement>) => {
         const val = parseInt(e.target.value, 10);
-        setLatency(val);
+        hasLocalChanges.current = true;
+        setLocalLatency(val);
         setIsSaved(false);
         debouncedSave(val, forceError);
     };
 
     const handleToggleError = () => {
         const newVal = !forceError;
-        setForceError(newVal);
+        hasLocalChanges.current = true;
+        setLocalForceError(newVal);
         setIsSaved(false);
         // No debounce needed for toggle, immediate effect is better
         updateChaos({
@@ -95,8 +99,9 @@ export default function ChaosControls({ projectId }: ChaosControlsProps) {
     };
 
     const handleReset = () => {
-        setLatency(0);
-        setForceError(false);
+        hasLocalChanges.current = true;
+        setLocalLatency(0);
+        setLocalForceError(false);
         setIsSaved(false);
         updateChaos({
             variables: {

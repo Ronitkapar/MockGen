@@ -10,11 +10,16 @@ interface PatchCardProps {
 
 export default function PatchCard({ explanation, codeBlock, targetFile }: PatchCardProps) {
     const { applyPatch } = useEditor();
-    const { webContainer } = useWebContainer();
+    const { webContainer, isSupported } = useWebContainer();
     const [isApplied, setIsApplied] = useState(false);
 
     const handleApply = async () => {
-        if (!webContainer) return;
+        if (!isSupported || !webContainer) {
+            // Show editor-only update when WebContainer isn't available
+            applyPatch(targetFile, codeBlock);
+            setIsApplied(true);
+            return;
+        }
 
         try {
             // 1. Update the Editor UI (Visual)

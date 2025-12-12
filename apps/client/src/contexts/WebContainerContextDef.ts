@@ -5,6 +5,7 @@ export interface WebContainerContextType {
     webContainer: WebContainer | null;
     isLoading: boolean;
     error: string | null;
+    isSupported: boolean;
 }
 
 export const WebContainerContext = createContext<WebContainerContextType | null>(null);

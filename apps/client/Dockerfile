@@ -1,42 +1,15 @@
-# Build stage
-FROM node:18-alpine AS builder
+# Development Dockerfile for Vite React Client
+# Uses volume-mounted node_modules from host for faster builds
+FROM node:18-slim
 
 WORKDIR /usr/src/app
 
-# Copy package files
-COPY package*.json ./
+# The node_modules will be volume mounted from the host
+# This avoids the long npm install time in Docker
 
-# Install dependencies
-RUN npm install
-
-# Copy source code
-COPY . .
-
-# Build the application
-RUN npm run build
-
-# Production stage with nginx
-FROM nginx:alpine
-
-# Copy built assets from builder
-COPY --from=builder /usr/src/app/dist /usr/share/nginx/html
-
-# Copy custom nginx configuration for SPA routing
-RUN echo 'server { \
-    listen 5173; \
-    server_name localhost; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    location / { \
-    try_files $uri $uri/ /index.html; \
-    } \
-    # Security headers for WebContainer API \
-    add_header Cross-Origin-Embedder-Policy "require-corp" always; \
-    add_header Cross-Origin-Opener-Policy "same-origin" always; \
-    }' > /etc/nginx/conf.d/default.conf
-
-# Expose port
+# Expose Vite dev server port
 EXPOSE 5173
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Start development server with hot reload
+# --host exposes to all network interfaces for Docker
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

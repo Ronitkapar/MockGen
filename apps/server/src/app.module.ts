@@ -15,6 +15,8 @@ import { MockEndpoint } from "./entities/mock-endpoint.entity";
 // Modules
 import { ScanModule } from "./modules/scan/scan.module";
 import { MockModule } from "./modules/mock/mock.module";
+import { ChaosModule } from "./chaos/chaos.module";
+import { ProjectModule } from "./modules/project/project.module";
 
 @Module({
   imports: [
@@ -57,6 +59,8 @@ import { MockModule } from "./modules/mock/mock.module";
 
     ScanModule,
     MockModule,
+    ChaosModule,
+    ProjectModule,
   ],
   providers: [
     {
@@ -65,4 +69,4 @@ import { MockModule } from "./modules/mock/mock.module";
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

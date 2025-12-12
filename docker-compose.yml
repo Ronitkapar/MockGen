@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # ---------------------------------------------------------------------------
   # Database: MySQL 8.0
@@ -52,8 +50,6 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
-    env_file:
-      - ./apps/server/.env
     environment:
       NODE_ENV: development
       DB_HOST: db
@@ -63,13 +59,16 @@ services:
       DB_DATABASE: mockgen_db
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-your_gemini_api_key_here}
     ports:
       - "3000:3000"
     networks:
       - mockgen_net
     volumes:
+      # Mount the server source code
       - ./apps/server:/usr/src/app
-      - /usr/src/app/node_modules
+      # Mount the root-level node_modules (npm workspaces)
+      - ./node_modules:/usr/src/app/node_modules
 
   # ---------------------------------------------------------------------------
   # Frontend: React (Vite)
@@ -87,8 +86,10 @@ services:
     networks:
       - mockgen_net
     volumes:
+      # Mount the client source code
       - ./apps/client:/usr/src/app
-      - /usr/src/app/node_modules
+      # Mount the root-level node_modules (npm workspaces)
+      - ./node_modules:/usr/src/app/node_modules
 
   # ---------------------------------------------------------------------------
   # Gateway: Nginx
