@@ -1,14 +1,6 @@
-import React, { createContext, useContext, useRef, useCallback } from 'react';
+import React, { useRef, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
-
-interface EditorContextType {
-    registerEditor: (editor: monaco.editor.IStandaloneCodeEditor) => void;
-    applyPatch: (targetFile: string, newCode: string) => void;
-    activeFile: string | null;
-    setActiveFile: (fileName: string) => void;
-}
-
-const EditorContext = createContext<EditorContextType | null>(null);
+import { EditorContext } from './EditorContextDef';
 
 export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
@@ -62,12 +54,4 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
             {children}
         </EditorContext.Provider>
     );
-};
-
-export const useEditor = () => {
-    const context = useContext(EditorContext);
-    if (!context) {
-        throw new Error('useEditor must be used within an EditorProvider');
-    }
-    return context;
 };

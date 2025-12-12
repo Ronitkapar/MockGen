@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { gql, useMutation } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { selectFormattedLogs, setAnalyzing } from '../store/terminalSlice';
 import { RootState } from '../store'; // Assuming store setup exists
 
@@ -18,6 +19,13 @@ interface ChatMessage {
     content: string;
 }
 
+// Type definition for GraphQL mutation response
+interface AnalyzeErrorResponse {
+    analyzeError: {
+        response: string;
+    };
+}
+
 export default function ChatPanel() {
     const dispatch = useDispatch();
     const logs = useSelector(selectFormattedLogs);
@@ -29,7 +37,7 @@ export default function ChatPanel() {
 
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    const [analyzeError] = useMutation(ANALYZE_ERROR_MUTATION);
+    const [analyzeError] = useMutation<AnalyzeErrorResponse>(ANALYZE_ERROR_MUTATION);
 
     // Auto-scroll to bottom of chat
     useEffect(() => {
@@ -57,7 +65,7 @@ export default function ChatPanel() {
 
             setMessages((prev) => [
                 ...prev,
-                { role: 'ai', content: data.analyzeError.response },
+                { role: 'ai', content: data?.analyzeError.response ?? 'No response received.' },
             ]);
         } catch (err) {
             setMessages((prev) => [
@@ -77,7 +85,7 @@ export default function ChatPanel() {
                 <h2 className="text-white font-semibold">AI Mentor</h2>
                 <select
                     value={mode}
-                    onChange={(e) => setMode(e.target.value as any)}
+                    onChange={(e) => setMode(e.target.value as 'STUDENT' | 'PROFESSIONAL')}
                     className="bg-gray-700 text-xs text-white p-1 rounded border border-gray-600 focus:outline-none"
                 >
                     <option value="PROFESSIONAL">Pro Mode</option>
@@ -98,8 +106,8 @@ export default function ChatPanel() {
                     <div
                         key={idx}
                         className={`p-3 rounded-lg text-sm ${msg.role === 'user'
-                                ? 'bg-blue-600 text-white ml-8'
-                                : 'bg-gray-800 text-gray-200 mr-8'
+                            ? 'bg-blue-600 text-white ml-8'
+                            : 'bg-gray-800 text-gray-200 mr-8'
                             }`}
                     >
                         <div className="font-bold text-xs mb-1 opacity-50">
@@ -138,8 +146,8 @@ export default function ChatPanel() {
                         onClick={handleSendMessage}
                         disabled={isAnalyzing}
                         className={`w-full py-2 px-4 rounded text-sm font-medium transition-colors ${isAnalyzing
-                                ? 'bg-gray-600 cursor-not-allowed text-gray-400'
-                                : 'bg-blue-600 hover:bg-blue-500 text-white'
+                            ? 'bg-gray-600 cursor-not-allowed text-gray-400'
+                            : 'bg-blue-600 hover:bg-blue-500 text-white'
                             }`}
                     >
                         {isAnalyzing ? 'Thinking...' : 'Analyze Logs & Ask'}

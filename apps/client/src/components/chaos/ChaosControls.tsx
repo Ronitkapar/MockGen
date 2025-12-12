@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { useState, useMemo, useEffect, ChangeEvent } from 'react';
+import { gql } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import debounce from 'lodash.debounce';
 
 // GraphQL Definitions
@@ -25,6 +26,16 @@ interface ChaosControlsProps {
     projectId: string;
 }
 
+// Type definitions for GraphQL responses
+interface ChaosConfig {
+    latencyMs: number;
+    forceError: boolean;
+}
+
+interface GetChaosConfigResponse {
+    chaosConfig: ChaosConfig;
+}
+
 export default function ChaosControls({ projectId }: ChaosControlsProps) {
     // Local state for immediate UI responsiveness
     const [latency, setLatency] = useState(0);
@@ -32,24 +43,26 @@ export default function ChaosControls({ projectId }: ChaosControlsProps) {
     const [isSaved, setIsSaved] = useState(true);
 
     // Apollo Hooks
-    const { data } = useQuery(GET_CHAOS_CONFIG, {
+    const { data: queryData } = useQuery<GetChaosConfigResponse>(GET_CHAOS_CONFIG, {
         variables: { projectId },
-        onCompleted: (data) => {
-            if (data?.chaosConfig) {
-                setLatency(data.chaosConfig.latencyMs);
-                setForceError(data.chaosConfig.forceError);
-            }
-        },
     });
+
+    // Sync query data to local state
+    useEffect(() => {
+        if (queryData?.chaosConfig) {
+            setLatency(queryData.chaosConfig.latencyMs);
+            setForceError(queryData.chaosConfig.forceError);
+        }
+    }, [queryData]);
 
     const [updateChaos] = useMutation(UPDATE_CHAOS_CONFIG, {
         onCompleted: () => setIsSaved(true),
     });
 
     // Debounced Save Function
-    // We create this once using useCallback so the debounce timer persists
-    const debouncedSave = useCallback(
-        debounce((newLatency: number, newError: boolean) => {
+    // We create this once using useMemo so the debounce timer persists
+    const debouncedSave = useMemo(
+        () => debounce((newLatency: number, newError: boolean) => {
             updateChaos({
                 variables: {
                     projectId,
@@ -61,7 +74,7 @@ export default function ChaosControls({ projectId }: ChaosControlsProps) {
     );
 
     // Handlers
-    const handleLatencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleLatencyChange = (e: ChangeEvent<HTMLInputElement>) => {
         const val = parseInt(e.target.value, 10);
         setLatency(val);
         setIsSaved(false);

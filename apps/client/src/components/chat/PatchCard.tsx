@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useEditor } from '../../context/EditorContext';
-import { useWebContainer } from '../../contexts/WebContainerContext';
+import { useState } from 'react';
+import { useEditor } from '../../context/useEditor';
+import { useWebContainer } from '../../contexts/useWebContainer';
 
 interface PatchCardProps {
     explanation: string;
@@ -59,8 +59,8 @@ export default function PatchCard({ explanation, codeBlock, targetFile }: PatchC
                     onClick={handleApply}
                     disabled={isApplied}
                     className={`w-full py-2 px-4 rounded text-sm font-medium transition-all flex items-center justify-center space-x-2 ${isApplied
-                            ? 'bg-green-600/20 text-green-400 cursor-default border border-green-600/50'
-                            : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/20'
+                        ? 'bg-green-600/20 text-green-400 cursor-default border border-green-600/50'
+                        : 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg hover:shadow-blue-500/20'
                         }`}
                 >
                     {isApplied ? (

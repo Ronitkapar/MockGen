@@ -52,6 +52,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    env_file:
+      - ./apps/server/.env
     environment:
       NODE_ENV: development
       DB_HOST: db

@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { useWebContainer } from '../contexts/WebContainerContext';
+import { useEffect, useRef, useState } from 'react';
+import { useWebContainer } from '../contexts/useWebContainer';
 import TerminalPanel, { TerminalRef } from '../components/TerminalPanel';
 import { STARTER_TEMPLATE } from '../constants/starter-template';
 
@@ -65,7 +65,7 @@ export default function SandboxPage() {
                 );
 
                 // 4. Listen for Server Ready
-                webContainer.on('server-ready', (port, url) => {
+                webContainer.on('server-ready', (_port: number, url: string) => {
                     term?.write(`\r\n✔ Server ready at ${url}\r\n`);
                     setPreviewUrl(url);
                 });
